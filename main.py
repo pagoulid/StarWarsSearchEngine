@@ -28,7 +28,9 @@ class StarWars_Search_Engine:
 
         
 
-    ######PUBLIC CLASSES#########
+                        ######PUBLIC CLASSES#########
+
+
     def Search(self):
         if self.SearchName == 'ErrorName':
             pass
@@ -36,49 +38,95 @@ class StarWars_Search_Engine:
         else:
             filter = self._SearchFilter()
             link =self.host+self.API['people']+filter
-            req=requests.get(link)
+            info = self._GetInfo(link)
+            #req=requests.get(link)
 
-            info = json.loads(req.content.decode())# decode gives data in string format -> convert to dict
+            #info = json.loads(req.content.decode())# decode gives data in string format -> convert to dict
             
             count = info['count'] # case search returned more than 1 charachter
             info = info['results']# array of dictionaries
             
             
 
-
+            
             if count!=0:
-                data = []
-        
-                for i in range(count):
-                
-                    data.append({'Name':info[i]['name'],'Height':info[i]['height'],'Mass':info[i]['mass'],'Birth Year':info[i]['birth_year']})
 
-                    self._Display(data)
+                self._InfoDisp(info,count)
+                
+                
 
             else:# case not fount any relative match
                 self._ForceNotWithYou()
         
              
-    ######PRIVATE CLASSES#########
-    def _Display(self,results):
+                             ######PRIVATE CLASSES#########
 
-        for result in results:
+    
+
+########DISPLAY FUNCTIONS############
+    def _InfoDisp(self,info,count):
+        
+        data = []
+        Planets = []
+        SearchedNames = [] 
+        
+        for i in range(count):
+                
+            data.append({'Name':info[i]['name'],'Height':info[i]['height'],'Mass':info[i]['mass'],'Birth Year':info[i]['birth_year']})
+
+            # method to retrieve planetes info 
+              #self._Planetes(info[i]['name'],info[i]['homeworld']) # line 146
+            NumOfPlanet = self._GetPlanetNum(info[i]['homeworld']) 
+
+           
+            Planets.append(NumOfPlanet)
+            SearchedNames.append(info[i]['name'])
+        
+
+        SearchedPlanets=self._GetPlanetesInfo(Planets,SearchedNames)# searched planets is a dict of dict
+            
+            
+           
+        CharOnPlanet={SearchedNames[i]:Planets[i] for i in range(len(SearchedNames))}                  
+
+        self._Display(data,SearchedPlanets,CharOnPlanet)
+
+    def _Display(self,Nameresults,Planetresults,CharOnPlanet):# charonplanet-> {names:numofplanet} , planetresults {numofplanet:info}
+        name=''
+        for result in Nameresults:
 
             keys = result.keys()
             vals = result.values()
 
             for key,val in zip(keys,vals):
+                if key=='Name':
+                    name=val
+
                 print(key+": "+val+"\n")
+            
+            
+            print('---------------')
+            Plnum = CharOnPlanet[name]
+            Plinfo = Planetresults[Plnum] 
+
+            print('Name: ' +Plinfo['Name'])
+            print('Population: ' +Plinfo['Population'])
             print('\n\n')
 
+
+########DISPLAY FUNCTIONS############
+ 
+
+
+#########  VALIDATION FUNCTIONS ##########
     def _CheckArgs(self,args):# check length of args and if 1st arg is search , return name
     
-        expr = 1 if (len(args)==2 and args[0]=='search') else 0
+            expr = 1 if (len(args)==2 and args[0]=='search') else 0
 
-        if not expr:
-            raise Exception("Given invalid arguments or wrong number of arguments")
-        else:
-            pass
+            if not expr:
+                raise Exception("Given invalid arguments or wrong number of arguments")
+            else:
+                pass
 
     def _CheckName(self,SearchName):# not saved in searchName of THIS object yet
         # Restrictions: 
@@ -113,7 +161,41 @@ class StarWars_Search_Engine:
         else:
             return False
             
+#########  VALIDATION FUNCTIONS ##########  
+
+######GETTERS#######
+
+    def _GetPlanetesInfo(self,planets,names):
+        DictOfDicts = {}
+        for planet,name in zip(planets,names):
+            
+
+            if planet in DictOfDicts:
+                pass
+
+            else:
+                link = self.host+self.API['planets']+planet
+                Planetinfo = self._GetInfo(link)
                 
+                DictOfDicts[planet]={'Name':Planetinfo['name'],'Population':Planetinfo['population']}
+
+        return DictOfDicts
+
+    def _GetInfo(self,URL):
+        req = requests.get(URL)
+        info = json.loads(req.content.decode())
+        return info
+    def _GetPlanetNum(self,PlanetLink):
+
+        num = PlanetLink.split('/',5)
+        num =  num[len(num)-1] # because last element is x/ 
+        num = num[:len(num)-1]
+        print(num)
+
+        return num
+
+
+######GETTERS####### 
 
 
     def _SearchFilter(self):
@@ -122,6 +204,9 @@ class StarWars_Search_Engine:
 
     def _ForceNotWithYou(self):
         print("The force is not with you")
+
+    
+
 
             
     
