@@ -111,6 +111,12 @@ class StarWars_Search_Engine:
 
             print('Name: ' +Plinfo['Name'])
             print('Population: ' +Plinfo['Population'])
+            print('\n')
+
+            PlanetDays,IsDaysUknown = self._GetEarthTime(Plinfo['Rotation Period'],24.0)
+            PlanetYears,IsYearsUknown = self._GetEarthTime(Plinfo['Orbital Period'],365.0)
+            self._GetDispEarthTime(Plinfo['Name'],PlanetYears,PlanetDays,IsYearsUknown,IsDaysUknown)# must check case years and days are unknown on char's planet
+            
             print('\n\n')
 
 
@@ -165,6 +171,8 @@ class StarWars_Search_Engine:
 
 ######GETTERS#######
 
+
+
     def _GetPlanetesInfo(self,planets,names):
         DictOfDicts = {}
         for planet,name in zip(planets,names):
@@ -177,7 +185,7 @@ class StarWars_Search_Engine:
                 link = self.host+self.API['planets']+planet
                 Planetinfo = self._GetInfo(link)
                 
-                DictOfDicts[planet]={'Name':Planetinfo['name'],'Population':Planetinfo['population']}
+                DictOfDicts[planet]={'Name':Planetinfo['name'],'Population':Planetinfo['population'] , 'Orbital Period':Planetinfo['orbital_period'],'Rotation Period':Planetinfo['rotation_period']}
 
         return DictOfDicts
 
@@ -193,6 +201,40 @@ class StarWars_Search_Engine:
         print(num)
 
         return num
+
+    def _GetEarthTime(self,PlanetTime,EarthTime):# returns planet time analogous to earth time and , if planet time is known
+        IsUknown = False
+        if PlanetTime != 'unknown':
+            PlanetTime = float(PlanetTime) # earth time is already float
+            res = PlanetTime/EarthTime
+        else:
+            res = 'unknown'
+            IsUknown=True
+        
+        
+        return res,IsUknown
+
+    def _GetDispEarthTime(self,planet,years,days,years_unknown,days_unknown):
+
+        
+
+        if years_unknown and days_unknown:
+            print('On {} 1 year on Earth  is uknown years and 1 day unknown days'.format(planet))
+        else:
+
+            if years_unknown :
+                print('On {} 1 year on Earth  is uknown years and 1 day {:.2f} days'.format(planet,days))
+            elif days_unknown:
+
+                print('On {} 1 year on Earth  is {:.2f} years and 1 day unknown days'.format(planet,years))
+            else:
+                print('On {} 1 year on Earth  is {:.2f} years and 1 day {:.2f} days'.format(planet,years, days))
+
+
+
+
+
+
 
 
 ######GETTERS####### 
