@@ -18,7 +18,8 @@ class StarWars_Search_Engine:
         self.SearchName = ''
         self.host = 'https://swapi.dev/'
         self.API = {'people':'/api/people/','planets':'/api/planets/'}
-        self.Cache = Cache() 
+        self.CacheHandler = Cache() 
+        
 
         
 
@@ -48,38 +49,28 @@ class StarWars_Search_Engine:
 
             self.SearchName = args[1]
 
-            filter = self._SearchFilter()
-            link =self.host+self.API['people']+filter
+            #Cache checkpoint
+            CacheEmpty=self.CacheHandler.IsEmpty('people')
 
-            count,info = self._GetInfo(link)# Should check and store in cache
-           
-            
-             # count in case search returned more than 1 charachter
-             # info array of dictionaries
-            
-            
 
-            
-            if count!=0:
 
-                #self.Cache.StoreInPeople(count,info) # store in cache people data
-                self._InfoDisp(info,count)
-         
-            else:# case not fount any relative match
+            if CacheEmpty:
 
-                self._ForceNotWithYou()
+               self._GetNamesFromAPI()
+
+            else:
+
+                self._GetNamesFromCache()
+                
         
 
     
-
-
-             
                              ######PRIVATE CLASSES#########
 
     
 
 ########DISPLAY FUNCTIONS############
-    def _InfoDisp(self,info,count):
+    def _InfoDisp(self,count,info,FromCache = False):
         
         data = [] # store people info to display (list of dicts)
         Planets = [] # store planets num (arr)
@@ -87,20 +78,26 @@ class StarWars_Search_Engine:
         
         for i in range(count):
                 
-            data.append({'Name':info[i]['name'],'Height':info[i]['height'],'Mass':info[i]['mass'],'Birth Year':info[i]['birth_year']})
+            data.append({'Name':info[i]['name'],'Height':info[i]['height'],'Mass':info[i]['mass'],'Birth Year':info[i]['birth_year'],'homeworld':info[i]['homeworld']}) if not FromCache else data.append({'Name':info[i]['Name'],'Height':info[i]['Height'],'Mass':info[i]['Mass'],'Birth Year':info[i]['Birth Year'],'homeworld':info[i]['homeworld']})
             
             # InsertInCache
-            self.Cache.StoreInPeople(data[i])
             
-            SearchedNames.append(info[i]['name'])
+            self.CacheHandler.Store(data[i],'people') if not FromCache else print("")
+
             
+            SearchedNames.append(info[i]['name']) if not FromCache else SearchedNames.append(info[i]['Name'])
+
             #Get num of Planet 
             NumOfPlanet = self._GetPlanetNum(info[i]['homeworld']) 
             Planets.append(NumOfPlanet)
+        print("Num of planet ",Planets)
+        print("Names ",SearchedNames)
+
             
         
             # method to retrieve planetes info 
         SearchedPlanets=self._GetPlanetesInfo(Planets,SearchedNames)# searched planets is a dict of dict
+        print("DictOfDicts ",SearchedPlanets)
             
             
            
@@ -126,8 +123,8 @@ class StarWars_Search_Engine:
             Plnum = CharOnPlanet[name]
             Plinfo = Planetresults[Plnum] 
 
-            print('Name: ' +Plinfo['Name'])
-            print('Population: ' +Plinfo['Population'])
+            print('Name: ' ,Plinfo['Name'])
+            print('Population: ' ,Plinfo['Population'])
             print('\n')
 
             PlanetDays,IsDaysUknown = self._GetEarthTime(Plinfo['Rotation Period'],24.0)
@@ -190,23 +187,104 @@ class StarWars_Search_Engine:
 
 
 
-    def _GetPlanetesInfo(self,planets,names):
-        DictOfDicts = {}
-        for planet,name in zip(planets,names):
+    def _GetNamesFromAPI(self):
+        filter = self._SearchFilter()
+        link =self.host+self.API['people']+filter
+
+
+        # check if  searchname is substring to stored name if cache not empty
+        count,info = self._GetInfo(link)# Should check and store in cache
+           
+            # count in case search returned more than 1 charachter
+            # info array of dictionaries
+         
+        if count!=0:
+
+            self._InfoDisp(count,info)
+         
+        else:# case not fount any relative match
+
+            self._ForceNotWithYou()
+
+
+    def _GetNamesFromCache(self):
+        #count,info = Cache.retrieve(self.SearchName) returns counter and array of dicts if match else false false
+        # if count,info ->  self._InfoDisp(count,info)  else self._GetNamesFromAPI
+        count,info = self.CacheHandler.retrieve(self.SearchName,'people')
+        
+        if count==0: # No match from cache
+            self._GetNamesFromAPI()
+        else:
+            print(info)
+            self._InfoDisp(count,info,True)
+
+        # check if SearchName is part of Names in Cache and if yes return that names
+    def _GetPlanetesInfoFromAPI(self,planets,FromCache=False):
+        DictOfDicts={}
+        for planet in planets:
             
 
             if planet in DictOfDicts:
                 pass
 
             else:
+                #ifemptycache true or not in cache 
                 link = self.host+self.API['planets']+planet
                 Planetinfo = self._GetInfo(link)
                 
                 
                 DictOfDicts[planet]={"Name":Planetinfo['name']+"","Population":Planetinfo['population'] , "Orbital Period":Planetinfo['orbital_period'],"Rotation Period":Planetinfo['rotation_period']}
-                self.Cache.StoreInPlanet(DictOfDicts[planet]) # stored valid people data on search() , already got valid info for planets from people data
+               
+                # stored valid people data on search() , already got valid info for planets from people data
+                self.CacheHandler.Store(DictOfDicts[planet],'planets',planet) if not FromCache else print("")
+
 
         return DictOfDicts
+    def _GetPlanetesInfoFromCache(self,planets,names):
+      
+        DictOfDicts = {}
+        i = 0
+        for planet in planets:
+                count,info = self.CacheHandler.retrieve(planet,'planets')# error must give planet name
+                if count!=0:
+                    if planet in DictOfDicts:
+                        pass
+                    else:
+                        DictOfDicts[planet]=info[0]
+                else:
+                     link = self.host+self.API['planets']+planet
+                     Planetinfo = self._GetInfo(link)
+                
+                
+                     DictOfDicts[planet]={"Name":Planetinfo['name']+"","Population":Planetinfo['population'] , "Orbital Period":Planetinfo['orbital_period'],"Rotation Period":Planetinfo['rotation_period']}
+                    # store to cache
+                     self.CacheHandler.Store(DictOfDicts[planet],'planets',planet)
+                     
+        print(DictOfDicts)
+        return DictOfDicts
+
+
+            
+        #else:
+            #self._GetPlanetesInfoFromAPI(planets,True)
+
+    def _GetPlanetesInfo(self,planets,names):
+        DictOfDicts = {}
+        # ifemptycache
+        IsEmptyCache = self.CacheHandler.IsEmpty('planets')
+        if IsEmptyCache:
+            DictOfDicts=self._GetPlanetesInfoFromAPI(planets)
+        else:
+            DictOfDicts=self._GetPlanetesInfoFromCache(planets,names)
+
+        return DictOfDicts
+
+
+
+
+       
+
+   
 
     def _GetInfo(self,URL):
         req = requests.get(URL)
@@ -232,6 +310,8 @@ class StarWars_Search_Engine:
         print(num)
 
         return num
+
+    
 
     def _GetEarthTime(self,PlanetTime,EarthTime):# returns planet time analogous to earth time and , if planet time is known
         IsUknown = False
