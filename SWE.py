@@ -2,6 +2,8 @@
 import json
 import re
 import requests
+import time
+import datetime
 from Cache import Cache
 
 # Functions :
@@ -16,6 +18,7 @@ class StarWars_Search_Engine:
         
         #self.cache={'CachePeople:{}','CachePlanets:{}'}
         self.SearchName = ''
+        self.TimestampOption = -1 # 1 for --world else 0
         self.host = 'https://swapi.dev/'
         self.API = {'people':'/api/people/','planets':'/api/planets/'}
         self.CacheHandler = Cache() 
@@ -70,7 +73,7 @@ class StarWars_Search_Engine:
     
 
 ########DISPLAY FUNCTIONS############
-    def _InfoDisp(self,count,info,FromCache = False):
+    def _InfoDisp(self,count,info,CacheNameTime = None,FromCache = False):
         
         data = [] # store people info to display (list of dicts)
         Planets = [] # store planets num (arr)
@@ -82,7 +85,8 @@ class StarWars_Search_Engine:
             
             # InsertInCache
             
-            self.CacheHandler.Store(data[i],'people') if not FromCache else print("")
+            self.CacheHandler.Store(data[i],'people',datetime.datetime.now()) if not FromCache else print("")
+           
 
             
             SearchedNames.append(info[i]['name']) if not FromCache else SearchedNames.append(info[i]['Name'])
@@ -90,22 +94,21 @@ class StarWars_Search_Engine:
             #Get num of Planet 
             NumOfPlanet = self._GetPlanetNum(info[i]['homeworld']) 
             Planets.append(NumOfPlanet)
-        print("Num of planet ",Planets)
-        print("Names ",SearchedNames)
+        
 
             
         
             # method to retrieve planetes info 
-        SearchedPlanets=self._GetPlanetesInfo(Planets,SearchedNames)# searched planets is a dict of dict
-        print("DictOfDicts ",SearchedPlanets)
+        SearchedPlanets,FromPlanetsCache,CachePlanetsTime=self._GetPlanetesInfo(Planets,SearchedNames)# searched planets is a dict of dict
+        #print("DictOfDicts ",SearchedPlanets)
             
             
            
         CharOnPlanet={SearchedNames[i]:Planets[i] for i in range(len(SearchedNames))}                  
 
-        self._Display(data,SearchedPlanets,CharOnPlanet)
+        self._Display(data,SearchedPlanets,CharOnPlanet,FromCache,FromPlanetsCache,CacheNameTime,CachePlanetsTime)
 
-    def _Display(self,Nameresults,Planetresults,CharOnPlanet):# charonplanet-> {names:numofplanet} , planetresults {numofplanet:info}
+    def _Display(self,Nameresults,Planetresults,CharOnPlanet,FromPeopleCache,FromPlanetsCache,CacheNameTime,CachePlanetsTime):# charonplanet-> {names:numofplanet} , planetresults {numofplanet:info}
         name=''
         for result in Nameresults:
 
@@ -116,7 +119,10 @@ class StarWars_Search_Engine:
                 if key=='Name':
                     name=val
 
-                print(key+": "+val+"\n")
+                print(key+": "+val+"\n") if key!='homeworld'else print('')
+
+                if FromPeopleCache and self.TimestampOption == 0 and key == 'Birth Year' :# check key to print cache time on last iter
+                    print('\n Cached :'+CacheNameTime[name]+'\n')
             
             
             print('---------------')
@@ -131,6 +137,10 @@ class StarWars_Search_Engine:
             PlanetYears,IsYearsUknown = self._GetEarthTime(Plinfo['Orbital Period'],365.0)
             self._GetDispEarthTime(Plinfo['Name'],PlanetYears,PlanetDays,IsYearsUknown,IsDaysUknown)# must check case years and days are unknown on char's planet
             
+            if FromPlanetsCache:# None from API, else {num:True} or {}
+                if FromPlanetsCache!= None and self.TimestampOption == 1:
+                    if Plnum in FromPlanetsCache:
+                        print('\n Cached : '+CachePlanetsTime[Plnum])
             print('\n\n')
 
 
@@ -141,12 +151,14 @@ class StarWars_Search_Engine:
 #########  VALIDATION FUNCTIONS ##########
     def _CheckArgs(self,args):# check length of args and if 1st arg is search , return name
     
-            expr = 1 if (len(args)==2 and args[0]=='search') else 0
+            length = len(args)
+            expr = 1 if ((length==2 or length==3) and args[0]=='search') else 0
 
             if not expr:
                 raise Exception("Given invalid arguments or wrong number of arguments")
             else:
-                pass
+
+                self._SetCacheOptions(length,args)
 
     def _CheckName(self,SearchName):# not saved in searchName of THIS object yet
         # Restrictions: 
@@ -181,7 +193,19 @@ class StarWars_Search_Engine:
         else:
             return False
             
-#########  VALIDATION FUNCTIONS ##########  
+#########  VALIDATION FUNCTIONS ########## 
+
+######SETTERS#######
+    def _SetCacheOptions(self,length,args):
+        if length == 2:
+            self.TimestampOption = 0
+        else :# length is definetely 3
+            if args[2] == '--world':
+                self.TimestampOption = 1
+            else:
+                raise Exception('Invalid Arguments')
+        
+######SETTERS#######
 
 ######GETTERS#######
 
@@ -210,13 +234,13 @@ class StarWars_Search_Engine:
     def _GetNamesFromCache(self):
         #count,info = Cache.retrieve(self.SearchName) returns counter and array of dicts if match else false false
         # if count,info ->  self._InfoDisp(count,info)  else self._GetNamesFromAPI
-        count,info = self.CacheHandler.retrieve(self.SearchName,'people')
+        count,info,CacheNameTime = self.CacheHandler.retrieve(self.SearchName,'people')# CacheTime [] othe ret var
         
         if count==0: # No match from cache
             self._GetNamesFromAPI()
         else:
             print(info)
-            self._InfoDisp(count,info,True)
+            self._InfoDisp(count,info,CacheNameTime,True)
 
         # check if SearchName is part of Names in Cache and if yes return that names
     def _GetPlanetesInfoFromAPI(self,planets,FromCache=False):
@@ -236,48 +260,54 @@ class StarWars_Search_Engine:
                 DictOfDicts[planet]={"Name":Planetinfo['name']+"","Population":Planetinfo['population'] , "Orbital Period":Planetinfo['orbital_period'],"Rotation Period":Planetinfo['rotation_period']}
                
                 # stored valid people data on search() , already got valid info for planets from people data
-                self.CacheHandler.Store(DictOfDicts[planet],'planets',planet) if not FromCache else print("")
+                self.CacheHandler.Store(DictOfDicts[planet],'planets',datetime.datetime.now(),planet) if not FromCache else print("")
 
 
         return DictOfDicts
     def _GetPlanetesInfoFromCache(self,planets,names):
-      
+        FromCache = {}
         DictOfDicts = {}
+        CachePlanetsTime={}
         i = 0
         for planet in planets:
-                count,info = self.CacheHandler.retrieve(planet,'planets')# error must give planet name
+                count,info,CachePlanetTime = self.CacheHandler.retrieve(planet,'planets')# CacheTime []
                 if count!=0:
                     if planet in DictOfDicts:
                         pass
                     else:
                         DictOfDicts[planet]=info[0]
+                        FromCache[planet] = True
+                        CachePlanetsTime[planet] = CachePlanetTime[0]
                 else:
                      link = self.host+self.API['planets']+planet
                      Planetinfo = self._GetInfo(link)
+
+                     
                 
                 
                      DictOfDicts[planet]={"Name":Planetinfo['name']+"","Population":Planetinfo['population'] , "Orbital Period":Planetinfo['orbital_period'],"Rotation Period":Planetinfo['rotation_period']}
                     # store to cache
-                     self.CacheHandler.Store(DictOfDicts[planet],'planets',planet)
-                     
-        print(DictOfDicts)
-        return DictOfDicts
+                     self.CacheHandler.Store(DictOfDicts[planet],'planets',PlanetNum=planet)
+
+        
+        return DictOfDicts,FromCache,CachePlanetsTime
 
 
             
-        #else:
-            #self._GetPlanetesInfoFromAPI(planets,True)
+        
 
     def _GetPlanetesInfo(self,planets,names):
         DictOfDicts = {}
+        FromCache = None # if API return none cache , else return True array or []
+        CachePlanetsTime = None
         # ifemptycache
         IsEmptyCache = self.CacheHandler.IsEmpty('planets')
         if IsEmptyCache:
             DictOfDicts=self._GetPlanetesInfoFromAPI(planets)
         else:
-            DictOfDicts=self._GetPlanetesInfoFromCache(planets,names)
+            DictOfDicts,FromCache,CachePlanetsTime=self._GetPlanetesInfoFromCache(planets,names)
 
-        return DictOfDicts
+        return DictOfDicts,FromCache,CachePlanetsTime
 
 
 
@@ -307,7 +337,7 @@ class StarWars_Search_Engine:
         num = PlanetLink.split('/',5)
         num =  num[len(num)-1] # because last element is x/ 
         num = num[:len(num)-1]
-        print(num)
+        
 
         return num
 

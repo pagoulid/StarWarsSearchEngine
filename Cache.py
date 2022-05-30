@@ -8,16 +8,16 @@ class Cache:
     def __init__(self):
         self.fhandler = FileHandler()
         
-    def Store(self,data,spiece,PlanetNum=None):
+    def Store(self,data,spiece,timestamp=None,PlanetNum=None):
         path = './'+spiece+'/'
         self.fhandler.IsDir(path)
 
 
         
         if PlanetNum==None:
-            self.fhandler.CreateFile(path,str(data['Name']),str(data)) 
+            self.fhandler.CreateFile(path,str(data['Name']),str(data),timestamp) 
         else:
-            self.fhandler.CreateFile(path,str(PlanetNum),str(data))
+            self.fhandler.CreateFile(path,str(PlanetNum),str(data),timestamp)
 
        
 
@@ -42,6 +42,13 @@ class Cache:
     def retrieve(self,GivenName,spiece):
         count = 0
         info = []
+         
+        if spiece == 'planets':
+            CacheTime = []
+
+        else:
+            CacheTime = {} # array for planet ,dict for person
+
         FolderList = self.fhandler.ListDir(spiece)
         
         for f in FolderList:
@@ -56,20 +63,22 @@ class Cache:
                     data =txt.readline()
                     print(data)
                     data=json.loads(data.replace("'",'"'))
-                    print("Data: ",data)
+                    
 
                     info.append(data)
 
+                    if type(CacheTime)==list:
+                        CacheTime.append(txt.readline()) 
+                    else:
+                         CacheTime[f] = txt.readline()
+
                 count=count+1
-
-
-
-                
+    
             else:
 
                 continue
 
-        return count,info
+        return count,info,CacheTime
 
 
 

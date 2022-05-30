@@ -1,5 +1,6 @@
 
 import os
+import time
 
 class FileHandler:
     def IsDir(self,path,mkdir=True): # if dir not exists , make it
@@ -38,12 +39,15 @@ class FileHandler:
 
 
 
-    def CreateFile(self,path,filename,data):
+    def CreateFile(self,path,filename,data,timestamp):
         subfolder = path + filename
         os.mkdir(subfolder)
         file = '/'+filename +'.txt'
-        with open(subfolder+file,'w') as f:
+        with open(subfolder+file,'a') as f:
 
             f.write(data)
+
+            if timestamp!=None:
+                f.write('\n'+str(timestamp))
 
     
