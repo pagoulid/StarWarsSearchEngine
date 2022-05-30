@@ -1,8 +1,13 @@
 
 import os
 import time
+import shutil
 
 class FileHandler:
+    def RecRm(self,subf):
+        for f in subf:
+            path='./'+f+'/'
+            shutil.rmtree(path)
     def IsDir(self,path,mkdir=True): # if dir not exists , make it
            
 

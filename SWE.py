@@ -155,7 +155,14 @@ class StarWars_Search_Engine:
             expr = 1 if ((length==2 or length==3) and args[0]=='search') else 0
 
             if not expr:
-                raise Exception("Given invalid arguments or wrong number of arguments")
+                
+                if(length==2 and args[0]=='cache'and args[1]=='--clean'):
+                    #todo
+                    self.CacheHandler.Clear(['people','planets'])
+                    exit()
+                else:
+                    
+                    raise Exception("Given invalid arguments or wrong number of arguments")
             else:
 
                 self._SetCacheOptions(length,args)

@@ -37,6 +37,8 @@ class Cache:
             return False
 
     
+    def Clear(self,subfolders):
+        self.fhandler.RecRm(subfolders)
 
 
     def retrieve(self,GivenName,spiece):
