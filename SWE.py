@@ -5,6 +5,10 @@ import requests
 import time
 import datetime
 from Cache import Cache
+from Frame import Frame
+import pandas as pd
+
+
 
 # Functions :
 #   - 1 public Search Function
@@ -22,6 +26,7 @@ class StarWars_Search_Engine:
         self.host = 'https://swapi.dev/'
         self.API = {'people':'/api/people/','planets':'/api/planets/'}
         self.CacheHandler = Cache() 
+        self.command = ''
         
 
         
@@ -51,6 +56,8 @@ class StarWars_Search_Engine:
         else:
 
             self.SearchName = args[1]
+            
+            self.command = args # To store into DataFrame 
 
             #Cache checkpoint
             CacheEmpty=self.CacheHandler.IsEmpty('people')
@@ -110,11 +117,44 @@ class StarWars_Search_Engine:
 
     def _Display(self,Nameresults,Planetresults,CharOnPlanet,FromPeopleCache,FromPlanetsCache,CacheNameTime,CachePlanetsTime):# charonplanet-> {names:numofplanet} , planetresults {numofplanet:info}
         name=''
+        Firstframe = ''
+        Iterframe=''
+        count=True # initialize dataframe
         for result in Nameresults:
 
             keys = result.keys()
             vals = result.values()
+            
+            # names vis
+           
+            ######Name DataFrames##########
+            if count:
+                Firstframe = Frame(keys,vals)
+                frame = Firstframe
+            else:
+                Iterframe = Frame(keys,vals)
+                frame=Iterframe
+                
 
+            
+            frame.Delete('homeworld')
+            name = frame.GetVal('Name')
+
+
+
+            if FromPeopleCache and self.TimestampOption == 0:
+                frame.Insert('Cache Time For Char',CacheNameTime[name])
+                
+            else:
+                frame.Insert('Cache Time For Char','None')
+            ######Name DataFrames##########
+            
+            
+            
+            
+
+            ######Name Display########## (Planet Display on line 214)
+            
             for key,val in zip(keys,vals):
                 if key=='Name':
                     name=val
@@ -124,10 +164,58 @@ class StarWars_Search_Engine:
                 if FromPeopleCache and self.TimestampOption == 0 and key == 'Birth Year' :# check key to print cache time on last iter
                     print('\n Cached :'+CacheNameTime[name]+'\n')
             
-            
+            ######Name Display##########
             print('---------------')
+            
             Plnum = CharOnPlanet[name]
-            Plinfo = Planetresults[Plnum] 
+            Plinfo = Planetresults[Plnum] # find matched Planet of person
+            ######Planet DataFrames##########
+            Plkeys = Plinfo.keys()
+            Plvals = Plinfo.values()
+
+            Plframe = Frame(Plkeys,Plvals)
+
+            if FromPlanetsCache:# None from API, else {num:True} or {}
+                if FromPlanetsCache!= None and self.TimestampOption == 1:
+                    if Plnum in FromPlanetsCache:
+                        Plframe.Insert('Cache Time For Planet',CachePlanetsTime[Plnum])
+                        
+                    else:
+                        Plframe.Insert('Cache Time For Planet','None')
+                else:
+                   Plframe.Insert('Cache Time For Planet','None')
+
+                   
+            else:
+                Plframe.Insert('Cache Time For Planet','None')
+
+            ######Planet DataFrames##########
+
+
+            ###Merge Planet and Names Dataframes#######
+            
+            frame.Insert('PlanetName',Plframe.GetVal('Name')) # insert planetname nad merge planet info
+            Plframe.Delete('Name')
+            
+            frame.Merge(Plframe,1) # Returns a me
+            
+            frame.Insert('Search Args',self.command)
+            
+            del Plframe
+            
+            if count:
+                count=False # use iterframe
+            else:
+                Firstframe.Merge(Iterframe,0)
+            ###Merge Planet and Names Dataframes#######
+                
+                
+
+            ####Planet Display#######
+         
+            
+            #Plnum = CharOnPlanet[name]
+            #Plinfo = Planetresults[Plnum] 
 
             print('Name: ' ,Plinfo['Name'])
             print('Population: ' ,Plinfo['Population'])
@@ -141,8 +229,11 @@ class StarWars_Search_Engine:
                 if FromPlanetsCache!= None and self.TimestampOption == 1:
                     if Plnum in FromPlanetsCache:
                         print('\n Cached : '+CachePlanetsTime[Plnum])
+            
+            ####Planet Display#######
             print('\n\n')
-
+        GroupObj=Firstframe.df.groupby(['PlanetName','Name'])#.apply(print)
+        print(GroupObj.first()) # ot of loop (Group according to planets) ###CHECKPOINT####
 
 ########DISPLAY FUNCTIONS############
  
