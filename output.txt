@@ -1,0 +1,86 @@
+         Name Height Mass Birth_Year NCacheTime    PlanetName Population Orbital_Period Rotation_Period PCacheTime
+
+  Jango Fett    183   79      66BBY       None  Concord Dawn    unknown        unknown         unknown       None
+
+  Boba Fett    183  78.2    31.5BBY       None     Kamino  1            463              27       None
+
+                   Search Arguments: ['search', 'fett']
+
+               Name Height Mass Birth_Year NCacheTime PlanetName Population Orbital_Period Rotation_Period PCacheTime
+
+  Anakin Skywalker    188   84    41.9BBY       None   Tatooine     2            34              23       None
+
+  Luke Skywalker    172   77      19BBY       None   Tatooine     2            34              23       None
+
+  Shmi Skywalker    163  unknown      72BBY       None   Tatooine     2            34              23       None
+
+                   Search Arguments: ['search', 'walker']
+
+        Name Height  Mass Birth_Year                  NCacheTime PlanetName  Population Orbital_Period Rotation_Period PCacheTime
+
+  Boba Fett    183  78.2    31.5BBY  222-5-31 2:29:23.367838     Kamino  1            463              27       None
+
+                   Search Arguments: ['search', 'BoBA']
+
+          Name Height Mass Birth_Year NCacheTime PlanetName  Population Orbital_Period Rotation_Period PCacheTime
+
+  Leia Organa    15   49      19BBY       None   Alderaan  2            364              24       None
+
+                   Search Arguments: ['search', 'leia', '--world']
+
+               Name Height Mass Birth_Year NCacheTime PlanetName Population Orbital_Period Rotation_Period                  PCacheTime
+
+  Anakin Skywalker    188   84    41.9BBY       None   Tatooine     2            34              23  222-5-31 2:29:4.6228
+
+                   Search Arguments: ['search', 'Anaki', '--world']
+
+
+ 		 Total Number Of Searches :8
+ 		 Total Time :4.073315382003784 sec
+
+         Name Height Mass Birth_Year NCacheTime    PlanetName Population Orbital_Period Rotation_Period PCacheTime
+
+  Jango Fett    183   79      66BBY       None  Concord Dawn    unknown        unknown         unknown       None
+
+  Boba Fett    183  78.2    31.5BBY       None     Kamino  1            463              27       None
+
+                   Search Arguments: ['search', 'fett']
+
+                    Name Height Mass Birth_Year NCacheTime PlanetName Population Orbital_Period Rotation_Period PCacheTime
+
+  Wicket Systri Warrick     88   2       8BBY       None      Endor   3            42              18       None
+
+  Wat Tambor    193   48    unknown       None      Skako  5            384              27       None
+
+  Obi-Wan Kenobi    182   77      57BBY       None    Stewjon    unknown        unknown         unknown       None
+
+  Anakin Skywalker    188   84    41.9BBY       None   Tatooine     2            34              23       None
+
+  Luke Skywalker    172   77      19BBY       None   Tatooine     2            34              23       None
+
+  Shmi Skywalker    163  unknown      72BBY       None   Tatooine     2            34              23       None
+
+  Watto    137  unknown    unknown       None   Toydaria   11            184              21       None
+
+                   Search Arguments: ['search', 'wa']
+
+         Name Height Mass Birth_Year NCacheTime PlanetName    Population Orbital_Period Rotation_Period                  PCacheTime
+
+  Wat Tambor    193   48    unknown       None      Skako  5            384              27  222-5-31 2:36:16.385286
+
+  Watto    137  unknown    unknown       None   Toydaria   11            184              21  222-5-31 2:36:15.919277
+
+                   Search Arguments: ['search', 'wat', '--world']
+
+         Name Height Mass Birth_Year NCacheTime PlanetName Population Orbital_Period Rotation_Period PCacheTime
+
+  Darth Maul    175   8      54BBY       None   Dathomir       52            491              24       None
+
+  Darth Vader    22  136    41.9BBY       None   Tatooine     2            34              23  222-5-31 2:36:14.572467
+
+                   Search Arguments: ['search', 'darth', '--world']
+
+
+ 		 Total Number Of Searches :13
+ 		 Total Time :35.28226709365845 sec
+

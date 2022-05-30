@@ -55,11 +55,11 @@ class Cache:
         
         for f in FolderList:
 
-            if GivenName.lower() in f.lower():
+            if (GivenName.lower() in f.lower()) and spiece=='people' or (GivenName==f) and spiece=='planets' :# error for planets must ==
                 path = self.fhandler.GetSubDir(spiece,f)
                 File = self.fhandler.ListDir(path)
                 
-                #print('./'+path+'/'+File[0])
+                
                 with open('./'+path+'/'+File[0],'r') as txt:
                     
                     data =txt.readline()

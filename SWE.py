@@ -1,6 +1,7 @@
 
 import json
 import re
+from tokenize import Double
 import requests
 import time
 import datetime
@@ -27,6 +28,7 @@ class StarWars_Search_Engine:
         self.API = {'people':'/api/people/','planets':'/api/planets/'}
         self.CacheHandler = Cache() 
         self.command = ''
+        self.TimeExec = time.time() 
         
 
         
@@ -88,7 +90,7 @@ class StarWars_Search_Engine:
         
         for i in range(count):
                 
-            data.append({'Name':info[i]['name'],'Height':info[i]['height'],'Mass':info[i]['mass'],'Birth Year':info[i]['birth_year'],'homeworld':info[i]['homeworld']}) if not FromCache else data.append({'Name':info[i]['Name'],'Height':info[i]['Height'],'Mass':info[i]['Mass'],'Birth Year':info[i]['Birth Year'],'homeworld':info[i]['homeworld']})
+            data.append({'Name':info[i]['name'],'Height':info[i]['height'],'Mass':info[i]['mass'],'Birth_Year':info[i]['birth_year'],'homeworld':info[i]['homeworld']}) if not FromCache else data.append({'Name':info[i]['Name'],'Height':info[i]['Height'],'Mass':info[i]['Mass'],'Birth_Year':info[i]['Birth_Year'],'homeworld':info[i]['homeworld']})
             
             # InsertInCache
             
@@ -101,17 +103,21 @@ class StarWars_Search_Engine:
             #Get num of Planet 
             NumOfPlanet = self._GetPlanetNum(info[i]['homeworld']) 
             Planets.append(NumOfPlanet)
+            
+            
         
 
             
         
             # method to retrieve planetes info 
-        SearchedPlanets,FromPlanetsCache,CachePlanetsTime=self._GetPlanetesInfo(Planets,SearchedNames)# searched planets is a dict of dict
-        #print("DictOfDicts ",SearchedPlanets)
+        
+        SearchedPlanets,FromPlanetsCache,CachePlanetsTime=self._GetPlanetesInfo(Planets)#,SearchedNames)# searched planets is a dict of dict
+        
             
             
            
-        CharOnPlanet={SearchedNames[i]:Planets[i] for i in range(len(SearchedNames))}                  
+        CharOnPlanet={SearchedNames[i]:Planets[i] for i in range(len(SearchedNames))}
+                         
 
         self._Display(data,SearchedPlanets,CharOnPlanet,FromCache,FromPlanetsCache,CacheNameTime,CachePlanetsTime)
 
@@ -143,10 +149,10 @@ class StarWars_Search_Engine:
 
 
             if FromPeopleCache and self.TimestampOption == 0:
-                frame.Insert('Cache Time For Char',CacheNameTime[name])
+                frame.Insert('NCacheTime',CacheNameTime[name])
                 
             else:
-                frame.Insert('Cache Time For Char','None')
+                frame.Insert('NCacheTime','None')
             ######Name DataFrames##########
             
             
@@ -161,7 +167,7 @@ class StarWars_Search_Engine:
 
                 print(key+": "+val+"\n") if key!='homeworld'else print('')
 
-                if FromPeopleCache and self.TimestampOption == 0 and key == 'Birth Year' :# check key to print cache time on last iter
+                if FromPeopleCache and self.TimestampOption == 0 and key == 'Birth_Year' :# check key to print cache time on last iter
                     print('\n Cached :'+CacheNameTime[name]+'\n')
             
             ######Name Display##########
@@ -178,16 +184,16 @@ class StarWars_Search_Engine:
             if FromPlanetsCache:# None from API, else {num:True} or {}
                 if FromPlanetsCache!= None and self.TimestampOption == 1:
                     if Plnum in FromPlanetsCache:
-                        Plframe.Insert('Cache Time For Planet',CachePlanetsTime[Plnum])
+                        Plframe.Insert('PCacheTime',CachePlanetsTime[Plnum])
                         
                     else:
-                        Plframe.Insert('Cache Time For Planet','None')
+                        Plframe.Insert('PCacheTime','None')
                 else:
-                   Plframe.Insert('Cache Time For Planet','None')
+                   Plframe.Insert('PCacheTime','None')
 
                    
             else:
-                Plframe.Insert('Cache Time For Planet','None')
+                Plframe.Insert('PCacheTime','None')
 
             ######Planet DataFrames##########
 
@@ -199,7 +205,7 @@ class StarWars_Search_Engine:
             
             frame.Merge(Plframe,1) # Returns a me
             
-            frame.Insert('Search Args',self.command)
+            #frame.Insert('Search Args',self.command)
             
             del Plframe
             
@@ -214,15 +220,14 @@ class StarWars_Search_Engine:
             ####Planet Display#######
          
             
-            #Plnum = CharOnPlanet[name]
-            #Plinfo = Planetresults[Plnum] 
+            
 
             print('Name: ' ,Plinfo['Name'])
             print('Population: ' ,Plinfo['Population'])
             print('\n')
 
-            PlanetDays,IsDaysUknown = self._GetEarthTime(Plinfo['Rotation Period'],24.0)
-            PlanetYears,IsYearsUknown = self._GetEarthTime(Plinfo['Orbital Period'],365.0)
+            PlanetDays,IsDaysUknown = self._GetEarthTime(Plinfo['Rotation_Period'],24.0)
+            PlanetYears,IsYearsUknown = self._GetEarthTime(Plinfo['Orbital_Period'],365.0)
             self._GetDispEarthTime(Plinfo['Name'],PlanetYears,PlanetDays,IsYearsUknown,IsDaysUknown)# must check case years and days are unknown on char's planet
             
             if FromPlanetsCache:# None from API, else {num:True} or {}
@@ -232,8 +237,48 @@ class StarWars_Search_Engine:
             
             ####Planet Display#######
             print('\n\n')
+        #Firstframe.Delete('Search Args')
+        Time = time.time() -self.TimeExec
         GroupObj=Firstframe.df.groupby(['PlanetName','Name'])#.apply(print)
+
         print(GroupObj.first()) # ot of loop (Group according to planets) ###CHECKPOINT####
+        # output.txt for results , Store... store time and num of searches
+        with open('output.txt','a') as O,open('StoreSearchTimeBeforeCleanCache.txt','a') as SST:
+            c =0
+            for name,group in GroupObj:
+                
+                if c==0:
+                    ds = str(group)
+                    ds = ds.split('PCacheTime')
+                    f=ds[0] + 'PCacheTime'
+                    s=ds[1]
+                    s=s.replace('0','')
+                    ds = f+'\n'+s
+                    
+                    c=c+1
+                else:
+                    ds = str(group).split('PCacheTime')
+                    
+                    ds=ds[1]
+                    ds = ds.replace('0','')
+                    
+                    c=c+1
+                    
+               
+
+
+                    
+               
+                O.write(ds)
+                O.write('\n')
+                
+                
+           
+            O.write('\n                   Search Arguments: '+str(self.command))
+            O.write('\n\n')
+            SST.write(str(Time)+','+str(c)+'\n')
+            O.close()
+            SST.close()
 
 ########DISPLAY FUNCTIONS############
  
@@ -250,6 +295,29 @@ class StarWars_Search_Engine:
                 if(length==2 and args[0]=='cache'and args[1]=='--clean'):
                     #todo
                     self.CacheHandler.Clear(['people','planets'])
+
+
+                    ###SST File To Retrieve Info###
+                    with open('output.txt','a') as O ,  open('StoreSearchTimeBeforeCleanCache.txt','r') as SST:
+                        tsum=0
+                        ssum=0
+                        lines = SST.readlines()
+                        for line in lines:
+                            
+                            time,search=line.split(',')
+                            
+                            
+                            tsum=tsum+float(time)
+                            ssum=ssum+int(search)
+                        O.write('\n \t\t Total Number Of Searches :'+str(ssum))
+                        O.write('\n \t\t Total Time :'+str(tsum)+' sec\n\n')
+                        
+                        O.close()
+                        SST.close()
+                    with open('StoreSearchTimeBeforeCleanCache.txt','w') as WSST:
+                        WSST.write('')
+                        WSST.close()
+
                     exit()
                 else:
                     
@@ -332,13 +400,15 @@ class StarWars_Search_Engine:
     def _GetNamesFromCache(self):
         #count,info = Cache.retrieve(self.SearchName) returns counter and array of dicts if match else false false
         # if count,info ->  self._InfoDisp(count,info)  else self._GetNamesFromAPI
-        count,info,CacheNameTime = self.CacheHandler.retrieve(self.SearchName,'people')# CacheTime [] othe ret var
+        count,info,CacheNameTime = self.CacheHandler.retrieve(self.SearchName,'people')# CacheTime [] 
         
-        if count==0: # No match from cache
-            self._GetNamesFromAPI()
+        if count!=0: # No match from cache
+            
+            self._InfoDisp(count,info,CacheNameTime,True)
         else:
             print(info)
-            self._InfoDisp(count,info,CacheNameTime,True)
+            self._GetNamesFromAPI()
+           
 
         # check if SearchName is part of Names in Cache and if yes return that names
     def _GetPlanetesInfoFromAPI(self,planets,FromCache=False):
@@ -355,20 +425,21 @@ class StarWars_Search_Engine:
                 Planetinfo = self._GetInfo(link)
                 
                 
-                DictOfDicts[planet]={"Name":Planetinfo['name']+"","Population":Planetinfo['population'] , "Orbital Period":Planetinfo['orbital_period'],"Rotation Period":Planetinfo['rotation_period']}
+                DictOfDicts[planet]={"Name":Planetinfo['name']+"","Population":Planetinfo['population'] , "Orbital_Period":Planetinfo['orbital_period'],"Rotation_Period":Planetinfo['rotation_period']}
                
                 # stored valid people data on search() , already got valid info for planets from people data
                 self.CacheHandler.Store(DictOfDicts[planet],'planets',datetime.datetime.now(),planet) if not FromCache else print("")
 
 
         return DictOfDicts
-    def _GetPlanetesInfoFromCache(self,planets,names):
+    def _GetPlanetesInfoFromCache(self,planets):
         FromCache = {}
         DictOfDicts = {}
         CachePlanetsTime={}
-        i = 0
+        
         for planet in planets:
                 count,info,CachePlanetTime = self.CacheHandler.retrieve(planet,'planets')# CacheTime []
+                
                 if count!=0:
                     if planet in DictOfDicts:
                         pass
@@ -379,13 +450,15 @@ class StarWars_Search_Engine:
                 else:
                      link = self.host+self.API['planets']+planet
                      Planetinfo = self._GetInfo(link)
+                     
+                        
 
                      
                 
                 
-                     DictOfDicts[planet]={"Name":Planetinfo['name']+"","Population":Planetinfo['population'] , "Orbital Period":Planetinfo['orbital_period'],"Rotation Period":Planetinfo['rotation_period']}
+                     DictOfDicts[planet]={"Name":Planetinfo['name']+"","Population":Planetinfo['population'] , "Orbital_Period":Planetinfo['orbital_period'],"Rotation_Period":Planetinfo['rotation_period']}
                     # store to cache
-                     self.CacheHandler.Store(DictOfDicts[planet],'planets',PlanetNum=planet)
+                     self.CacheHandler.Store(DictOfDicts[planet],'planets',timestamp=datetime.datetime.now(),PlanetNum=planet)
 
         
         return DictOfDicts,FromCache,CachePlanetsTime
@@ -394,7 +467,7 @@ class StarWars_Search_Engine:
             
         
 
-    def _GetPlanetesInfo(self,planets,names):
+    def _GetPlanetesInfo(self,planets):
         DictOfDicts = {}
         FromCache = None # if API return none cache , else return True array or []
         CachePlanetsTime = None
@@ -403,7 +476,8 @@ class StarWars_Search_Engine:
         if IsEmptyCache:
             DictOfDicts=self._GetPlanetesInfoFromAPI(planets)
         else:
-            DictOfDicts,FromCache,CachePlanetsTime=self._GetPlanetesInfoFromCache(planets,names)
+            
+            DictOfDicts,FromCache,CachePlanetsTime=self._GetPlanetesInfoFromCache(planets)
 
         return DictOfDicts,FromCache,CachePlanetsTime
 
