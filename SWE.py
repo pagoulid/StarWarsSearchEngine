@@ -317,7 +317,7 @@ class StarWars_Search_Engine:
                     with open('StoreSearchTimeBeforeCleanCache.txt','w') as WSST:
                         WSST.write('')
                         WSST.close()
-
+                    print('Removed cache')
                     print('\n \t\t Total Number Of Searches :'+str(ssum))
                     print('\n \t\t Total Time :'+str(tsum)+' sec\n\n')
 
