@@ -318,6 +318,9 @@ class StarWars_Search_Engine:
                         WSST.write('')
                         WSST.close()
 
+                    print('\n \t\t Total Number Of Searches :'+str(ssum))
+                    print('\n \t\t Total Time :'+str(tsum)+' sec\n\n')
+
                     exit()
                 else:
                     

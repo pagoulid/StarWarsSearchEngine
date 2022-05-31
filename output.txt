@@ -84,3 +84,47 @@
  		 Total Number Of Searches :13
  		 Total Time :35.28226709365845 sec
 
+         Name Height Mass Birth_Year NCacheTime PlanetName Population Orbital_Period Rotation_Period PCacheTime
+
+  Darth Maul    175   8      54BBY       None   Dathomir       52            491              24       None
+
+  Darth Vader    22  136    41.9BBY       None   Tatooine     2            34              23       None
+
+                   Search Arguments: ['search', 'darth', '--world']
+
+         Name Height Mass Birth_Year NCacheTime PlanetName Population Orbital_Period Rotation_Period                  PCacheTime
+
+  Darth Maul    175   8      54BBY       None   Dathomir       52            491              24  222-5-31 2:55:5.99479
+
+                   Search Arguments: ['search', 'Maul', '--world']
+
+                  Name Height     Mass Birth_Year NCacheTime PlanetName  Population Orbital_Period Rotation_Period PCacheTime
+
+  Bail Prestor Organa    191  unknown      67BBY       None   Alderaan  2            364              24       None
+
+  Leia Organa    15   49      19BBY       None   Alderaan  2            364              24       None
+
+  Quarsh Panaka    183  unknown      62BBY       None      Naboo  45            312              26       None
+
+  Anakin Skywalker    188   84    41.9BBY       None   Tatooine     2            34              23       None
+
+                   Search Arguments: ['search', 'Ana']
+
+           Name Height Mass Birth_Year NCacheTime PlanetName Population Orbital_Period Rotation_Period PCacheTime
+
+  Qui-Gon Jinn    193   89      92BBY       None    unknown    unknown                                    None
+
+                   Search Arguments: ['search', 'Qui']
+
+            Name Height     Mass Birth_Year                  NCacheTime PlanetName  Population Orbital_Period Rotation_Period PCacheTime
+
+  Quarsh Panaka    183  unknown      62BBY  222-5-31 2:55:41.14358      Naboo  45            312              26       None
+
+  Qui-Gon Jinn    193   89      92BBY  222-5-31 2:56:51.268735    unknown    unknown                                    None
+
+                   Search Arguments: ['search', 'Qu']
+
+
+ 		 Total Number Of Searches :10
+ 		 Total Time :40.03481078147888 sec
+
